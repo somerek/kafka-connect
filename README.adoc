@@ -127,3 +127,34 @@ curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json
                         }
                 }'
 ----
+
+
+curl -X POST http://localhost:8083/connectors -H "Content-Type: application/json" -d '{
+                "name": "debezium_sql_connector_01",
+                "config": {
+      "connector.class": "io.debezium.connector.sqlserver.SqlServerConnector",
+      "database.hostname": "mssql",
+      "database.port": "1433",
+      "database.user": "sa",
+      "database.password": "Admin123",
+      "database.dbname": "demo",
+      "topic.prefix": "mssql-01-",
+      "database.server.name": "mssql",
+      "table.whitelist": "dbo.orders",
+      "decimal.handling.mode": "double",
+                        "mode":"bulk",
+      "database.history.kafka.bootstrap.servers":"kafka:29092",
+      "database.history.kafka.topic":"dbz_dbhistory.mssql.asgard-01",
+                        "poll.interval.ms" : 5000
+                        }
+                }'
+
+
+docker exec --interactive --tty kafka kafka-console-consumer --bootstrap-server kafka:9092 --topic mssql.dbo.ORDERS --from-beginning
+
+
+docker exec --tty --interactive mssql bash -c '/opt/mssql-tools/bin/sqlcmd -l 30 -S localhost -U sa -P $SA_PASSWORD'
+use demo;
+insert into demo.dbo.ORDERS (order_id, customer_id, order_ts, order_total_usd, item) values (9, 2, '2019-11-28T10:27:19Z', '3.67', '===============It's me!================');
+go
+
